@@ -1,0 +1,229 @@
+#!/usr/bin/env python3
+#exe: py-chrome
+
+
+import ast
+import sys
+import atexit
+
+
+@atexit.register
+def on_script_exit():
+    if len(sys.argv) < 2: return
+
+    def convert_values(value):
+        #  This Function converts Numbers like "Int" or "Float" from "strings" coming from the terminal to the actual Types, like "Int" and "Float"
+
+        try: value = ast.literal_eval(value)
+        except: value=value
+        return value
+
+
+    args=""
+    function_name=sys.argv[1]
+    if len(sys.argv) > 2: args=list(map(convert_values, sys.argv[2:]))
+    getattr(sys.modules[__name__], "%s" % function_name)(*args)
+
+
+# WARNING:
+# ALL of The Code above is what makes this Script able to be Called in a Terminal
+# This type of python cli is at least possible with python 3.7.5 (64 bits)
+# ------------------------------------------------------------------------
+
+
+import time
+from glob import glob
+from os.path import expanduser
+from selenium import webdriver
+from selenium.webdriver.chrome.options import Options
+from selenium.webdriver.common.by import By
+from selenium.webdriver.common.keys import Keys
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
+from selenium.webdriver.common.desired_capabilities import DesiredCapabilities
+
+from python_enhancements import string
+
+import importlib
+ui = importlib.import_module("python_apps_enhancements.web.ui")
+
+
+home = expanduser("~")
+app_name="chromium"
+app_location=home+"/.config/"+app_name
+
+
+class Profile_Options(Options):
+    def __init__(self, profile=None):
+        #region (BEGIN) <~~~~~~{ ORIGINAL __init__ function }~~~~~~>
+
+        self._binary_location = ''
+        self._arguments = []
+        self._extension_files = []
+        self._extensions = []
+        self._experimental_options = {}
+        self._debugger_address = None
+        self._caps = DesiredCapabilities.CHROME.copy()
+
+        #endregion (END)
+
+
+        if profile:
+            profile_number=string.extract.integers(str(profile))[0]
+            profile="Profile {number}".format(number=profile_number)
+
+            self.add_experimental_option(
+            'excludeSwitches',
+            ['disable-sync'])
+            self.add_argument('--enable-sync')
+            self.add_argument("profile-directory="+profile)
+
+
+        self.add_argument("--user-data-dir="+app_location)
+
+
+def login(email, password, profile=None):
+    # Quiting due to Lack of Arguments
+    if 'email' not in locals() or 'password' not in locals():
+        print("Quiting due to Lack of Arguments"); return
+
+
+    chrome = webdriver.Chrome(executable_path='/usr/bin/chromedriver', options=Profile_Options(profile))
+    chrome.get('https://accounts.google.com/signin/chrome/sync/identifier?ssp=1&continue=https%3A%2F%2Fwww.google.com&flowName=GlifDesktopChromeSync')
+
+
+    emailBox = ui.get_element(chrome, "input[type='email'][id='identifierId']")
+    emailBox.send_keys(email)
+    emailBox.send_keys(Keys.ENTER)
+
+
+    passwordBox = ui.get_element(chrome, "input[type='password'][name='password']")
+    passwordBox.send_keys(password)
+    passwordBox.send_keys(Keys.ENTER)
+
+
+    # Waiting for chrome to Load the New Account
+    time.sleep(5)
+    chrome.quit()
+
+
+def login_by_google(browser=None, link=None, button=None):
+    # EXAMPLE
+    # login_by_google(link="https://www.notion.so/login", button=".notion-login > [role='button']")
+
+
+    if not browser and not link and not button: return print("Quiting due to Lack of Arguments ...")
+    launch_browser=True if link and button else False
+    if launch_browser:
+        options=Profile_Options(list_profiles()[0])
+
+        browser = webdriver.Chrome(executable_path='/usr/bin/chromedriver', options=options)
+        browser.get(link)
+
+        ui.get_element(browser, button).click()
+
+
+    url_to_find="accounts.google.com/signin/oauth/oauthchooseaccount?"
+    window_main=browser.window_handles[0]
+
+    # Giving Time for New windows to Load
+    time.sleep(3)
+
+
+    for window in browser.window_handles:
+        browser.switch_to.window(window)
+
+        for i in range(2):
+            time.sleep(3)
+            if url_to_find in browser.current_url:
+                # Email Account Button
+                ui.get_element(browser, "[data-identifier]:nth-of-type(1)").click()
+                break
+            pass
+
+
+    browser.switch_to.window(window_main)
+
+
+    # Waiting for chrome to Load the New Account
+    time.sleep(5)
+    if launch_browser: browser.quit()
+
+
+def sync(email, password, profile=None):
+    # Quiting due to Lack of Arguments
+    if 'email' not in locals() or 'password' not in locals():
+        print("Quiting due to Lack of Arguments"); return
+
+    if not profile:
+        profile=list_profiles()[0]
+
+
+    login(email, password)
+
+    chrome = webdriver.Chrome(executable_path='/usr/bin/chromedriver', options=Profile_Options(profile))
+    chrome.get('chrome://settings/syncSetup')
+
+
+    buttons_location="document.querySelector('settings-ui:nth-of-type(1)').shadowRoot.querySelector('settings-main:nth-of-type(1)').shadowRoot.querySelector('settings-basic-page[role=\"main\"]').shadowRoot.querySelector('settings-people-page:nth-of-type(1)').shadowRoot.querySelector('settings-sync-page:nth-of-type(1)').shadowRoot.querySelector('settings-sync-account-control:nth-of-type(1)').shadowRoot"
+    # Turn On... Button
+    chrome.execute_script(buttons_location+".querySelector('#sync-button').click()")
+    # Confirm Button
+    chrome.execute_script(buttons_location+".querySelector('#setup-buttons > .action-button[role=\"button\"]').click()")
+
+
+    # Waiting for chrome to Load the New Account
+    time.sleep(5)
+    chrome.quit()
+
+
+def list_profiles():
+    profiles_locations=[]
+    profiles_list=[]
+
+
+    for directory in glob(app_location+"/*/"):
+        if app_location+"/Profile " in directory:
+            profiles_locations.append(directory)
+
+    for profile in profiles_locations:
+        profiles_list.append(string.extract.integers(profile)[0])
+
+
+    return profiles_list
+
+
+def execute_macro(macro, browser=None):
+    # Prevention for any possible Unclosed Browser
+    time.sleep(3)
+
+    launch_browser = False if browser else True
+    if launch_browser:
+        options=Profile_Options(list_profiles()[0])
+        browser = webdriver.Chrome(executable_path='/usr/bin/chromedriver', options=options)
+
+
+    for command in macro:
+        if not command.get("lang"): command["lang"]="css"
+
+
+        if "link" in command:
+            browser.get(str(command.get("link").strip()))
+        elif "timeout" in command:
+            time.sleep(command.get("timeout"))
+        elif "click" in command:
+            ui.get_element(browser, str(command.get("click")), lang=str(command.get("lang"))).click()
+        elif "write" in command:
+            element=ui.get_element(browser, str(command.get("element")), lang=str(command.get("lang")))
+            element.send_keys(command.get("write"))
+
+            if command.get("enter"):
+                element.send_keys(Keys.ENTER)
+
+
+    # The Body it's Only being acquired to, cuz for some fucked up reason, chrome is not saving the last option, so we'l send 0 to the body at the End, and Every other setting will be saved except the body
+    body=ui.get_element(browser, "body:nth-of-type(1)")
+    body.send_keys("0")
+
+    if launch_browser: browser.quit()
+    time.sleep(5)
