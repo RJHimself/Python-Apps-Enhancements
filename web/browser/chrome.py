@@ -34,7 +34,10 @@ def on_script_exit():
 import time
 from glob import glob
 from os.path import expanduser
+
 from selenium import webdriver
+from selenium.webdriver import Chrome as Chrome_Webdriver
+
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
@@ -80,6 +83,12 @@ class Profile_Options(Options):
 
 
         self.add_argument("--user-data-dir="+app_location)
+
+
+class Start(Chrome_Webdriver):
+    def __init__(self, as_user= None, profile=None, executable_path="/usr/bin/chromedriver"):
+        options=Profile_Options(profile) if as_user else Options()
+        Chrome_Webdriver.__init__(self, executable_path=executable_path, options=options)
 
 
 def login(email, password, profile=None):
