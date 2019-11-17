@@ -138,11 +138,12 @@ def login_by_google(browser=None, link=None, button=None, profile=None):
     if launch_browser: browser.quit()
 
 
-def sync(email, password, profile=list_profiles()[0]):
+def sync(email, password, profile=None):
     # Quiting due to Lack of Arguments
     if 'email' not in locals() or 'password' not in locals():
         print("Quiting due to Lack of Arguments"); return
 
+    if not profile: profile=list_profiles()[0]
 
     login(email, password, profile=profile)
 
