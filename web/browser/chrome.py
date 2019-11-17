@@ -86,26 +86,19 @@ def login(email, password, profile=None):
         print("Quiting due to Lack of Arguments"); return
 
 
-    chrome = webdriver.Chrome(executable_path='/usr/bin/chromedriver', options=Profile_Options(profile))
-    chrome.get('https://accounts.google.com/signin/chrome/sync/identifier?ssp=1&continue=https%3A%2F%2Fwww.google.com&flowName=GlifDesktopChromeSync')
+    execute_macro([
+        # Open login Page
+        {"link": "https://accounts.google.com/signin/chrome/sync/identifier?ssp=1&continue=https%3A%2F%2Fwww.google.com&flowName=GlifDesktopChromeSync"},
+        # Log In
+        {"write": email, "enter": True, "element": "input[type='email'][id='identifierId']"},
+        {"timeout": 3},
+        {"write": password, "enter": True, "element": "input[type='password'][name='password']"},
+        # Waiting for chrome to Load the New Account
+        {"timeout": 5},
+    ], profile=profile)
 
 
-    emailBox = ui.get_element(chrome, "input[type='email'][id='identifierId']")
-    emailBox.send_keys(email)
-    emailBox.send_keys(Keys.ENTER)
-
-
-    passwordBox = ui.get_element(chrome, "input[type='password'][name='password']")
-    passwordBox.send_keys(password)
-    passwordBox.send_keys(Keys.ENTER)
-
-
-    # Waiting for chrome to Load the New Account
-    time.sleep(5)
-    chrome.quit()
-
-
-def login_by_google(browser=None, link=None, button=None):
+def login_by_google(browser=None, link=None, button=None, profile=None):
     # EXAMPLE
     # login_by_google(link="https://www.notion.so/login", button=".notion-login > [role='button']")
 
@@ -113,9 +106,7 @@ def login_by_google(browser=None, link=None, button=None):
     if not browser and not link and not button: return print("Quiting due to Lack of Arguments ...")
     launch_browser=True if link and button else False
     if launch_browser:
-        options=Profile_Options(list_profiles()[0])
-
-        browser = webdriver.Chrome(executable_path='/usr/bin/chromedriver', options=options)
+        browser = Start(as_user=True, profile=profile)
         browser.get(link)
 
         ui.get_element(browser, button).click()
@@ -153,26 +144,21 @@ def sync(email, password, profile=None):
     if 'email' not in locals() or 'password' not in locals():
         print("Quiting due to Lack of Arguments"); return
 
-    if not profile:
-        profile=list_profiles()[0]
 
-
-    login(email, password)
-
-    chrome = webdriver.Chrome(executable_path='/usr/bin/chromedriver', options=Profile_Options(profile))
-    chrome.get('chrome://settings/syncSetup')
-
+    login(email, password, profile=profile)
 
     buttons_location="document.querySelector('settings-ui:nth-of-type(1)').shadowRoot.querySelector('settings-main:nth-of-type(1)').shadowRoot.querySelector('settings-basic-page[role=\"main\"]').shadowRoot.querySelector('settings-people-page:nth-of-type(1)').shadowRoot.querySelector('settings-sync-page:nth-of-type(1)').shadowRoot.querySelector('settings-sync-account-control:nth-of-type(1)').shadowRoot"
-    # Turn On... Button
-    chrome.execute_script(buttons_location+".querySelector('#sync-button').click()")
-    # Confirm Button
-    chrome.execute_script(buttons_location+".querySelector('#setup-buttons > .action-button[role=\"button\"]').click()")
 
-
-    # Waiting for chrome to Load the New Account
-    time.sleep(5)
-    chrome.quit()
+    execute_macro([
+        # Open login Page
+        {"link": "chrome://settings/syncSetup"},
+        # Log In
+        {"lang": "js", "click": buttons_location+".querySelector('#sync-button')"},
+        {"timeout": 3},
+        {"lang": "js", "click": buttons_location+".querySelector('#setup-buttons > .action-button[role=\"button\"]')"},
+        # Waiting for chrome to Load the New Account
+        {"timeout": 5},
+    ], profile=profile)
 
 
 def list_profiles():
@@ -191,14 +177,14 @@ def list_profiles():
     return profiles_list
 
 
-def execute_macro(macro, browser=None):
+def execute_macro(macro, browser=None, profile=None):
     # Prevention for any possible Unclosed Browser
     time.sleep(3)
 
     launch_browser = False if browser else True
     if launch_browser:
         options=Profile_Options(list_profiles()[0])
-        browser = webdriver.Chrome(executable_path='/usr/bin/chromedriver', options=options)
+        browser = Start(as_user=True, profile=profile)
 
 
     for command in macro:
