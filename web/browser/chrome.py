@@ -145,6 +145,7 @@ def sync(email, password, profile=None):
 
     if not profile: profile=list_profiles()[0]
 
+
     login(email, password, profile=profile)
 
     buttons_location="document.querySelector('settings-ui:nth-of-type(1)').shadowRoot.querySelector('settings-main:nth-of-type(1)').shadowRoot.querySelector('settings-basic-page[role=\"main\"]').shadowRoot.querySelector('settings-people-page:nth-of-type(1)').shadowRoot.querySelector('settings-sync-page:nth-of-type(1)').shadowRoot.querySelector('settings-sync-account-control:nth-of-type(1)').shadowRoot"
@@ -202,6 +203,7 @@ def execute_macro(macro, browser=None, profile=None):
             element.send_keys(command.get("write"))
 
             if command.get("enter"):
+                time.sleep(1)
                 element.send_keys(Keys.ENTER)
 
 
