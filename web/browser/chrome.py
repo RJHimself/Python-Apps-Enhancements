@@ -58,18 +58,7 @@ app_location=home+"/.config/"+app_name
 
 class Profile_Options(Options):
     def __init__(self, profile=None):
-        #region (BEGIN) <~~~~~~{ ORIGINAL __init__ function }~~~~~~>
-
-        self._binary_location = ''
-        self._arguments = []
-        self._extension_files = []
-        self._extensions = []
-        self._experimental_options = {}
-        self._debugger_address = None
-        self._caps = DesiredCapabilities.CHROME.copy()
-
-        #endregion (END)
-
+        Options.__init__(self)
 
         if profile:
             profile_number=string.extract.integers(str(profile))[0]
