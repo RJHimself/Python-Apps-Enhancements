@@ -191,9 +191,7 @@ def execute_macro(macro, browser=None, profile=None):
     time.sleep(3)
 
     launch_browser = False if browser else True
-    if launch_browser:
-        options=Profile_Options(list_profiles()[0])
-        browser = Start(as_user=True, profile=profile)
+    if launch_browser: browser = Start(as_user=True, profile=profile)
 
 
     for command in macro:
