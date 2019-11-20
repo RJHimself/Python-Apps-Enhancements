@@ -57,8 +57,10 @@ app_location=home+"/.config/"+app_name
 
 
 class Profile_Options(Options):
-    def __init__(self, profile=None):
+    def __init__(self, as_user=None, profile=None, downloads_folder=None):
         Options.__init__(self)
+
+        if as_user and not profile and len(list_profiles()) > 0: profile=list_profiles()[0]
 
         if profile:
             profile_number=string.extract.integers(str(profile))[0]
@@ -70,12 +72,18 @@ class Profile_Options(Options):
             self.add_argument('--enable-sync')
             self.add_argument("profile-directory="+profile)
 
+        if as_user:
+            self.add_argument("--user-data-dir="+app_location)
 
-        self.add_argument("--user-data-dir="+app_location)
+        if downloads_folder:
+            prefs = {'download.default_directory' : downloads_folder}
+            self.add_experimental_option('prefs', prefs)
 
 class Start(Browser_Webdriver):
-    def __init__(self, as_user= None, profile=None, executable_path="/usr/bin/chromedriver"):
-        options=Profile_Options(profile) if as_user else Options()
+    def __init__(self, as_user=None, profile=None, executable_path="/usr/bin/chromedriver", downloads_folder=None, options=None):
+        if not options:
+            options=Profile_Options(as_user=as_user, profile=profile, downloads_folder=downloads_folder)
+
         Browser_Webdriver.__init__(self, executable_path=executable_path, options=options)
 
 
