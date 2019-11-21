@@ -34,6 +34,7 @@ def on_script_exit():
 import time
 from glob import glob
 from os.path import expanduser
+import os
 
 from selenium import webdriver
 from selenium.webdriver import Chrome as Browser_Webdriver
@@ -60,7 +61,10 @@ class Profile_Options(Options):
     def __init__(self, as_user=None, profile=None, downloads_folder=None):
         Options.__init__(self)
 
-        if as_user and not profile and len(list_profiles()) > 0: profile=list_profiles()[0]
+        # if as_user and not profile and len(list_profiles()) > 0: profile=list_profiles()[0]
+        if as_user and not profile:
+            if len(list_profiles()) < 1: os.mkdir(app_location+"/Profile 1")
+            profile=list_profiles()[0]
 
         if profile:
             profile_number=string.extract.integers(str(profile))[0]
@@ -151,8 +155,6 @@ def sync(email, password, profile=None):
     if 'email' not in locals() or 'password' not in locals():
         print("Quiting due to Lack of Arguments"); return
 
-    if not profile: profile=list_profiles()[0]
-
 
     login(email, password, profile=profile)
 
@@ -186,12 +188,12 @@ def list_profiles():
     return profiles_list
 
 
-def execute_macro(macro, browser=None, profile=None):
+def execute_macro(macro, browser=None, as_user=True, profile=None):
     # Prevention for any possible Unclosed Browser
     time.sleep(3)
 
     launch_browser = False if browser else True
-    if launch_browser: browser = Start(as_user=True, profile=profile)
+    if launch_browser: browser = Start(as_user=as_user, profile=profile)
 
 
     for command in macro:
