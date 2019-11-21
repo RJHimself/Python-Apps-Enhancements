@@ -58,7 +58,7 @@ app_location=home+"/.config/"+app_name
 
 
 class Profile_Options(Options):
-    def __init__(self, as_user=None, profile=None, downloads_folder=None):
+    def __init__(self, as_user=True, profile=None, downloads_folder=None):
         Options.__init__(self)
 
         if as_user and not profile:
@@ -83,7 +83,7 @@ class Profile_Options(Options):
             self.add_experimental_option('prefs', prefs)
 
 class Start(Browser_Webdriver):
-    def __init__(self, as_user=None, profile=None, executable_path="/usr/bin/chromedriver", downloads_folder=None, options=None):
+    def __init__(self, as_user=False, profile=None, executable_path="/usr/bin/chromedriver", downloads_folder=None, options=None):
         if not options:
             options=Profile_Options(as_user=as_user, profile=profile, downloads_folder=downloads_folder)
 
