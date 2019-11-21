@@ -61,7 +61,6 @@ class Profile_Options(Options):
     def __init__(self, as_user=None, profile=None, downloads_folder=None):
         Options.__init__(self)
 
-        # if as_user and not profile and len(list_profiles()) > 0: profile=list_profiles()[0]
         if as_user and not profile:
             if len(list_profiles()) < 1: os.mkdir(app_location+"/Profile 1")
             profile=list_profiles()[0]
